@@ -1,0 +1,11 @@
+{
+ "name": "thucnews",
+ "docs_in_file": 10460,
+ "docs": 10460,
+ "V": 30000,
+ "tokens": 2656934,
+ "median_tokens_per_doc": 183.0,
+ "min_df": 5,
+ "max_vocab": 30000,
+ "classes": 14
+}
