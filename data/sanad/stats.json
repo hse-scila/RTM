@@ -1,0 +1,11 @@
+{
+ "name": "sanad",
+ "docs_in_file": 10470,
+ "docs": 10470,
+ "V": 9830,
+ "tokens": 2070391,
+ "median_tokens_per_doc": 132.5,
+ "min_df": 5,
+ "max_vocab": 30000,
+ "classes": 7
+}
