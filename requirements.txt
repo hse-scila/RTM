@@ -1,0 +1,10 @@
+# versions used for the paper (Python 3.11, Windows 10, CUDA 12.6)
+torch==2.14.1
+numpy==2.2.6
+scipy==1.17.1
+pandas==3.0.5
+gensim==4.4.0
+matplotlib==3.10.9
+jupyter
+# Gibbs LDA sampler (third_party/pyGibbsLDA2), Windows only
+pywin32; sys_platform == "win32"
