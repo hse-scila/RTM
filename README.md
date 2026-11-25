@@ -1,124 +1,131 @@
-# Остаточная тематическая модель: выбор числа тем по воспроизводимости, семантической разделённости и излому энергии
+# Residual Topic Model: Interpretable Ordered Topics and the Choice of the Number of Topics
 
-Код, подготовленные данные и результаты к статье
-*Koltcov S., Ignatenko V., Surkov A. «Остаточная тематическая модель: выбор числа тем по воспроизводимости,
-семантической разделённости и излому энергии»* (Лаборатория социальной и когнитивной информатики, НИУ ВШЭ,
-Санкт-Петербург).
+Code, prepared datasets, and results accompanying the paper:
+*Koltcov S., Ignatenko V., Surkov A. “Residual Topic Model: Interpretable Ordered Topics and the Choice of the Number of Topics”* (Laboratory for Social and Cognitive Informatics, HSE University,
+St. Petersburg).
 
-**English summary.** The repository contains the Residual Topic Model (RTM), the baselines (Gibbs LDA, ProdLDA, ETM),
-the three criteria of the number of topics (energy knee, minimum of the median Jensen–Shannon divergence between runs,
-maximum of the top-word silhouette), the eleven prepared corpora and the criterion curves of all trained models,
-from which every table of the paper is reproduced without retraining (`notebooks/05_paper_tables.ipynb`).
+This repository contains the Residual Topic Model (RTM), the baselines (Gibbs LDA, ProdLDA, and ETM),
+three criteria for selecting the number of topics (the energy knee, the minimum median Jensen–Shannon divergence
+between runs, and the maximum top-word silhouette), eleven prepared corpora, and criterion curves for all trained
+models. These results allow every table in the paper to be reproduced without retraining
+(`notebooks/05_paper_tables.ipynb`).
 
-## Состав
+## Repository structure
 
-```
-rtm/                  пакет
-  model.py            RTM: кодировщик, книга кодов, matching pursuit, темы поверх фона (раздел 3)
-  train.py            обучение RTM (алгоритмы 2–3), воспроизводимое при заданном сиде
-  baselines.py        ProdLDA и ETM
-  lda.py, _glda_job.py LDA с сэмплированием Гиббса (сэмплер лаборатории, Windows)
-  synth.py            генератор синтетических корпусов
-  criteria.py         энергия и её излом, медиана JS между запусками, силуэт, восстановление тем
-  scan.py             расположение моделей перебора и расчёт кривых признаков
-  summary.py          оценки числа тем, средние ошибки, попадания, знаковый тест (таблицы 11–20)
-  data.py             список корпусов, сетки T, загрузка данных
+```text
+rtm/                  Python package
+  model.py            RTM: encoder, codebook, matching pursuit, topics as deviations from the background (Section 3)
+  train.py            RTM training (Algorithms 2–3), reproducible for a fixed seed
+  baselines.py        ProdLDA and ETM
+  lda.py, _glda_job.py LDA with Gibbs sampling (the laboratory's sampler, Windows)
+  synth.py            Synthetic corpus generator
+  criteria.py         Energy and its knee, median JS divergence between runs, silhouette, topic recovery
+  scan.py             Directory layout for model sweeps and computation of criterion curves
+  summary.py          Topic-count estimates, mean errors, exact matches, sign test (Tables 11–20)
+  data.py             Corpus registry, T grids, data loading
 notebooks/
-  01_datasets.ipynb       корпуса (таблица 4), повторное порождение синтетики
-  02_rtm.ipynb            обучение RTM, темы, темы документа, перебор T
+  01_datasets.ipynb       Corpora (Table 4), regeneration of synthetic data
+  02_rtm.ipynb            RTM training, topics, document topics, sweep over T
   03_baselines.ipynb      LDA, ProdLDA, ETM
-  04_criteria.ipynb       три признака по обученным моделям -> results/*.csv
-  05_paper_tables.ipynb   таблицы 5, 8, 10–20 и рисунки 8–9 статьи
-data/<корпус>/        подготовленные корпуса (см. ниже)
-results/              кривые признаков всех моделей статьи
-  curves.csv          корпус, модель, запуск, T, энергия E, силуэт
-  stability.csv       корпус, модель, представление (full | lift), T, медиана JS (бит)
-  recovery.csv        синтетика: число восстановленных истинных тем
-third_party/pyGibbsLDA2/  сэмплер Гиббса лаборатории (gibbsldacore.dll и обёртка на Python)
+  04_criteria.ipynb       Three criteria computed from trained models -> results/*.csv
+  05_paper_tables.ipynb   Tables 5, 8, 10–20 and Figures 8–9 of the paper
+data/<corpus>/        Prepared corpora (see below)
+results/              Criterion curves for all models in the paper
+  curves.csv          Corpus, model, run, T, energy E, silhouette
+  stability.csv       Corpus, model, representation (full | lift), T, median JS divergence (bits)
+  recovery.csv        Synthetic data: number of recovered ground-truth topics
+third_party/pyGibbsLDA2/  The laboratory's Gibbs sampler (gibbsldacore.dll and Python wrapper)
 ```
 
-## Установка
+## Installation
 
 ```bash
-git clone <адрес репозитория>
-cd <каталог репозитория>
+git clone https://github.com/hse-scila/RTM.git
+cd RTM
 python -m venv .venv
 .venv\Scripts\activate          # Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
 jupyter notebook notebooks
 ```
 
-PyTorch с поддержкой CUDA ставится по инструкции https://pytorch.org (для статьи — 2.14.1 с CUDA 12.6). Без GPU всё
-работает на CPU, но обучение RTM и нейросетевых моделей в несколько раз медленнее.
+For a CUDA-enabled PyTorch installation, follow the instructions at [pytorch.org](https://pytorch.org).
+The paper used PyTorch 2.14.1 with CUDA 12.6. All components also run on CPU, but training RTM and the neural
+baselines takes several times longer.
 
-## Как пользоваться блокнотами
+## Using the notebooks
 
-Блокноты запускаются из каталога `notebooks/` по порядку; каждый можно запускать и отдельно.
+Run the notebooks in order from the `notebooks/` directory. Each notebook can also be run independently.
 
-1. **Только проверить таблицы статьи** — достаточно `05_paper_tables.ipynb`. Он читает `results/*.csv` и за
-   несколько секунд выводит оценки числа тем по трём признакам, средние ошибки, число попаданий, знаковый тест,
-   минимумы JS, изломы энергии, восстановление тем и рисунки кривых.
-2. **Посмотреть данные** — `01_datasets.ipynb`: сводка корпусов и повторное порождение синтетических корпусов из
-   истинных тем (совпадает с поставляемыми до элемента).
-3. **Обучить модель** — `02_rtm.ipynb` (RTM на Lenta при T = 10: около 4 минут на GPU, 450 эпох; для пробы
-   `EPOCHS = 20`) и `03_baselines.ipynb` (LDA, ProdLDA, ETM). Модели сохраняются в
-   `models/<модель>/<корпус>/s<запуск>/T<T>/`.
-4. **Повторить весь перебор** — `RUN_SCAN = True` в блокнотах 02 и 03 (около 600 моделей RTM, 4–30 минут каждая на
-   GPU, и столько же моделей каждой из трёх базовых), затем `RUN = True` в `04_criteria.ipynb`: кривые
-   пересчитываются в `results/recomputed/`. Чтобы получить по ним таблицы, в `05_paper_tables.ipynb` укажите
-   `RES = ROOT / "results" / "recomputed"`.
+1. **Verify the paper's tables only:** run `05_paper_tables.ipynb`. It reads `results/*.csv` and, within a few
+   seconds, produces topic-count estimates for the three criteria, mean errors, exact-match counts, sign-test
+   results, JS minima, energy knees, topic-recovery results, and plots of the criterion curves.
+2. **Explore the data:** run `01_datasets.ipynb` for a corpus summary and regeneration of the synthetic corpora
+   from the ground-truth topics. The regenerated data match the supplied data element for element.
+3. **Train a model:** use `02_rtm.ipynb` for RTM (Lenta, T = 10: approximately 4 minutes on GPU for 450 epochs;
+   set `EPOCHS = 20` for a quick trial) and `03_baselines.ipynb` for LDA, ProdLDA, and ETM. Models are saved to
+   `models/<model>/<corpus>/s<run>/T<T>/`.
+4. **Repeat the full sweep:** set `RUN_SCAN = True` in notebooks 02 and 03 (approximately 600 RTM models,
+   each taking 4–30 minutes on GPU, and the same number of models for each of the three baselines).
+   Then set `RUN = True` in `04_criteria.ipynb` to recompute the curves in `results/recomputed/`.
+   To generate tables from these curves, set `RES = ROOT / "results" / "recomputed"` in
+   `05_paper_tables.ipynb`.
 
-Перебор числа тем: T = 4…30 с шагом 2 и с шагом 1 в окне K − 2…K + 2, три запуска на каждое T
-(`rtm.data.grid`); на синтетике с 6 и 20 темами сетка такая, как в таблице 2 статьи. RTM обучается 400 эпох на
-синтетике и 450 на реальных корпусах; запуск RTM с итоговым значением функции потерь больше 100 считается
-недопустимым (в статье — один запуск на 20 Newsgroups при T = 4).
+The topic-count sweep uses T = 4…30 in steps of 2, with steps of 1 in the window K − 2…K + 2, and three runs
+for each T (`rtm.data.grid`). For the synthetic corpora with 6 and 20 topics, the grids follow Table 2 of the
+paper. RTM is trained for 400 epochs on synthetic corpora and 450 epochs on real corpora. An RTM run with a final
+loss greater than 100 is considered invalid (one run on 20 Newsgroups at T = 4 in the paper).
 
-## Данные
+## Data
 
-| корпус | язык | документов | словарь V | рубрик / K |
+| Corpus | Language | Documents | Vocabulary V | Categories / K |
 |---|---|---:|---:|---:|
-| `synth_K6`, `synth_k`, `synth_K20`, `synth_K12_uneq` | — | 6000 | 11 229 | 6, 12, 20, 12 |
-| `lenta_E2` (Lenta) | русский | 8650 | 11 229 | 10 |
-| `news20_clean` (20 Newsgroups) | английский | 15 720 | 15 347 | 20 |
-| `mnds` (MN-DS) | английский | 10 829 | 21 701 | 17 |
-| `gnad10` (GNAD10) | немецкий | 10 252 | 27 663 | 9 |
-| `sanad` (SANAD) | арабский | 10 470 | 9 830 | 7 |
-| `thucnews` (THUCNews) | китайский | 10 460 | 30 000 | 14 |
-| `livedoor` (Livedoor) | японский | 7 365 | 17 101 | 9 |
+| `synth_K6`, `synth_k`, `synth_K20`, `synth_K12_uneq` | — | 6,000 | 11,229 | 6, 12, 20, 12 |
+| `lenta_E2` (Lenta) | Russian | 8,650 | 11,229 | 10 |
+| `news20_clean` (20 Newsgroups) | English | 15,720 | 15,347 | 20 |
+| `mnds` (MN-DS) | English | 10,829 | 21,701 | 17 |
+| `gnad10` (GNAD10) | German | 10,252 | 27,663 | 9 |
+| `sanad` (SANAD) | Arabic | 10,470 | 9,830 | 7 |
+| `thucnews` (THUCNews) | Chinese | 10,460 | 30,000 | 14 |
+| `livedoor` (Livedoor) | Japanese | 7,365 | 17,101 | 9 |
 
-Файлы корпуса: `bow.npz` (мешок слов, scipy CSR), `vocab.txt`, `stats.json`, `docs.txt.gz` (лемматизированные
-документы без стоп-слов, вход сэмплера Гиббса), `w2v_vectors.npy` (векторы word2vec, по которым в статье считается
-силуэт), `labels.npy` (рубрики документов, где есть), для синтетики — `phi_true.npy`, `truth.csv`, `popularity.npy`.
-Словарь ограничен 30 000 слов; слова, встретившиеся менее чем в пяти документах, отброшены на всех корпусах, кроме
-Lenta. 20 Newsgroups построен из `sklearn` 20news-bydate (train + test) без заголовков, подписей и цитат, документы
-короче десяти токенов отброшены.
+Each corpus contains `bow.npz` (a bag-of-words matrix in SciPy CSR format), `vocab.txt`, `stats.json`,
+`docs.txt.gz` (lemmatized documents with stop words removed, used as input to the Gibbs sampler),
+`w2v_vectors.npy` (the word2vec vectors used to compute the silhouette in the paper), and `labels.npy`
+(document categories, where available). Synthetic corpora additionally include `phi_true.npy`, `truth.csv`,
+and `popularity.npy`.
 
-Исходные коллекции принадлежат их авторам; при использовании данных ссылайтесь на исходные публикации корпусов
-(они приведены в статье).
+Vocabulary size is capped at 30,000 words. Words occurring in fewer than five documents are removed from all
+corpora except Lenta. The 20 Newsgroups corpus is built from the `sklearn` 20news-bydate dataset
+(train + test), with headers, signatures, and quoted text removed. Documents shorter than ten tokens are discarded.
 
-## Воспроизводимость
+The original collections belong to their respective authors. When using the data, cite the original corpus
+publications listed in the paper.
 
-* RTM при одном и том же сиде и устройстве повторяется до последнего знака: модель Lenta, T = 10, сид 0, обученная
-  `rtm.train.train_rtm`, совпадает с моделью статьи (максимальная разница тем 0). На другом GPU, другой версии
-  PyTorch или на CPU числа могут незначительно отличаться.
-* ProdLDA и ETM воспроизводимы при тех же условиях (модели Lenta, T = 10, сид 0 совпадают с моделями статьи).
-* Файлы `results/*.csv` посчитаны функциями пакета (`rtm.scan`) по всем моделям статьи: 2243 модели
-  четырёх типов. Оценки числа тем, которые по ним даёт `05_paper_tables.ipynb`, совпадают с таблицами статьи.
-* Сэмплер Гиббса LDA использует собственную случайную инициализацию: повторные запуски дают другие темы, оценки
-  признаков могут сдвинуться на соседние T.
-* Многопоточное обучение word2vec не воспроизводится до бита, поэтому векторы статьи сохранены в
-  `data/<корпус>/w2v_vectors.npy`.
-* `gibbsldacore.dll` работает только в Windows. На других системах LDA можно обучить любой реализацией
-  свёрнутого сэмплирования Гиббса (200 итераций, α = β = 0.01) и сохранить темы в `phi200.csv` того же формата
-  (`слово;p(w|t_1);…;p(w|t_T)`), после чего блокноты 04–05 работают без изменений.
+## Reproducibility
 
-## Лицензия
+* With the same seed and device, RTM is exactly reproducible: the Lenta model with T = 10 and seed 0 trained
+  using `rtm.train.train_rtm` matches the model used in the paper (maximum difference between topic
+  distributions: 0). Results may differ slightly on another GPU, with another PyTorch version, or on CPU.
+* ProdLDA and ETM are reproducible under the same conditions (the Lenta models with T = 10 and seed 0 match
+  those used in the paper).
+* The `results/*.csv` files were computed using the package functions (`rtm.scan`) for all 2,243 models
+  of the four types studied in the paper. The topic-count estimates produced from these files by
+  `05_paper_tables.ipynb` match the paper's tables.
+* The LDA Gibbs sampler uses its own random initialization. Repeated runs produce different topics, and
+  criterion-based estimates may shift to neighboring values of T.
+* Multithreaded word2vec training is not bitwise reproducible, so the vectors used in the paper are saved in
+  `data/<corpus>/w2v_vectors.npy`.
+* `gibbsldacore.dll` works only on Windows. On other systems, LDA can be trained using any implementation
+  of collapsed Gibbs sampling (200 iterations, α = β = 0.01). Save the topics to `phi200.csv` in the same
+  format (`word;p(w|t_1);…;p(w|t_T)`), and notebooks 04–05 will work without changes.
 
-Код пакета `rtm/` и блокноты распространяются по лицензии MIT (файл `LICENSE`). Лицензия не распространяется на
-исходные тексты корпусов в `data/` — права на них принадлежат авторам корпусов — и на сэмплер
-`third_party/pyGibbsLDA2`: это сэмплер Гиббса Лаборатории социальной и когнитивной информатики НИУ ВШЭ, он
-приложен для воспроизведения результатов LDA.
+## License
 
-## Цитирование
+The code in `rtm/` and the notebooks are distributed under the MIT License (see `LICENSE`).
+This license does not cover the original corpus texts in `data/`, whose rights belong to the corpus authors,
+or the sampler in `third_party/pyGibbsLDA2`. The latter is the Gibbs sampler developed by the Laboratory for
+Social and Cognitive Informatics at HSE University and is included to reproduce the LDA results.
 
-Если вы используете код или данные, ссылайтесь на статью (выходные данные будут добавлены после публикации).
+## Citation
+
+If you use the code or data, please cite the paper. Full bibliographic details will be added after publication.
