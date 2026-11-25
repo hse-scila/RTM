@@ -1,0 +1,11 @@
+{
+ "name": "gnad10",
+ "docs_in_file": 10252,
+ "docs": 10252,
+ "V": 27663,
+ "tokens": 1830543,
+ "median_tokens_per_doc": 148.0,
+ "min_df": 5,
+ "max_vocab": 30000,
+ "classes": 9
+}
